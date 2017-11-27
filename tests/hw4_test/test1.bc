@@ -1,0 +1,11 @@
+main() {
+    int x;
+    int b;
+    int c;
+
+
+    x = 3;
+    b = x + 2;
+    c = x + 6 + b;
+
+}
