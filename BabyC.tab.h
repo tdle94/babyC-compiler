@@ -76,7 +76,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 41 "BabyC.y"
+#line 42 "BabyC.y"
 {
 	struct ASTNode* node; // Most $$ values will be ASTNodes
 	int num; // Integer numbers

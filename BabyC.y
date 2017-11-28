@@ -37,12 +37,15 @@
 
 //Define the types for the grammar attributes ($$, $1, $2, ...)
 
+
 %union
 {
 	struct ASTNode* node; // Most $$ values will be ASTNodes
 	int num; // Integer numbers
 	char* string; // Strings for identifiers
 }
+
+
 
 //Specify the type for each token. Only needed for IDENT and NUM, because they are the only ones that have actual regexp rules
 %token <string> IDENT
@@ -142,17 +145,15 @@ Lfactor: Compare			{$$ = $1;}
 Compare: Expr Op Expr		{$$ = CreateCmpNode($1, $2, $3); puts("Creating Compare node");}
 ;
 
-/*Op: GE {}
-	| LE {}
-	| NE {}
-	| EQ {}
-	| '>' {}
-	| '<' {}
-;*/
-
-
-Op: GE | LE | NE | EQ | '>' | '<' 
+Op: GE 		{$$ = CreateOpNode(">=");}
+	| LE	{$$ = CreateOpNode("<=");}
+	| NE	{$$ = CreateOpNode("!=");}
+	| EQ	{$$ = CreateOpNode("==");}
+	| '>'	{$$ = CreateOpNode(">");}
+	| '<'	{$$ = CreateOpNode("<");}
 ;
+
+
 
 While: WHILE '('Condition')' '{'StatementList'}' {$$ = CreateWhileNode($3, $6); puts("Creating while node")}
 ;
