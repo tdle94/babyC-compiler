@@ -109,10 +109,6 @@ ASTNode *CreateStatementListNode(ASTNode *st, ASTNode *stList)
 {
     if (st->type != ASTNODE_IFELSE)
         st->next = stList;
-    // if (st->type == ASTNODE_IFELSE)
-    // {
-    //     printf("stmt: %d\n", stList->type);
-    // }
     return st;
 }
 
@@ -143,10 +139,7 @@ ASTNode *CreateIfNode(ASTNode *cond, ASTNode *stList)
     node->right = stList;
     node->type = ASTNODE_IF;
     node->op = CBR_OP;
-    // if (stList->type == ASTNODE_IFELSE)
-    // {
-    //     //printf("%d\n", stList->next->type);
-    // }
+
 
     return node;
 }
@@ -278,7 +271,12 @@ int Expr(ASTNode * node)
 {
     int res,            // result of next register
         t1,         // current t1 (temporary) register
-        t2;         // current t2 (temporary) register
+        t2,         // current t2 (temporary) register
+        temp = blkCounter;  // temporary block counter
+
+    BB basicBlock0;
+    BB basicBlock1;
+    BB basicBlock2;
 
     switch (node->type)
     {
@@ -292,26 +290,45 @@ int Expr(ASTNode * node)
             break;
         case ASTNODE_IF:                        // if node
             res = Expr(node->left);
-            Emit(node->op, &res, NULL, NULL);   // begin of block
+            basicBlock0.begin = myrandomlt26();     // begin
+            basicBlock1.begin = myrandomlt26();     // end
+            blockKeeper[temp++] = basicBlock0;
+            blockKeeper[temp] = basicBlock1;
+            Emit(node->op, &res, NULL, NULL);   // begin of if block
+            blkCounter++;
             Expr(node->right);
-            printf("B%d:\n", currentBlock);     // end of block
+            printf("%d:\n", basicBlock1.begin);     // end of if block
             break;
         case ASTNODE_IFELSE:                    // if else node
             res = Expr(node->left);
-            Emit(node->op, &res, NULL, NULL);   // begin of block
+            basicBlock0.begin = myrandomlt26();
+            basicBlock1.begin = myrandomlt26();
+            blockKeeper[temp++] = basicBlock0;
+            blockKeeper[temp++] = basicBlock1;
+            Emit(node->op, &res, NULL, NULL);   // begin of if block
+            blkCounter += 2;
             Expr(node->right);
-            printf("\tjumpi -> B%d\n", currentBlock); // done with an if stmt so no need to evaluate else, so jump to an end block
-            printf("B%d:\n", currentBlock);
+            basicBlock2.begin = myrandomlt26();
+            blockKeeper[temp] = basicBlock2;
+            printf("\tjumpi -> %d\n", basicBlock2.begin);        // jump to
+            printf("%d:\n", basicBlock1.begin);     // begin of else block
             Expr(node->next);
-            printf("B%d:\n", currentBlock);     // end of block
+            printf("%d:\n", basicBlock2.begin);  // end of if/else block
             break;
         case ASTNODE_WHILE:                     // while node
-            printf("B%d:\n", currentBlock);     
-            currentBlock++;
+            basicBlock0.begin = myrandomlt26();
+            blockKeeper[temp++] = basicBlock1;
+            printf("%d:\n", basicBlock0.begin);
             res = Expr(node->left);
+            basicBlock1.begin = myrandomlt26();
+            basicBlock2.begin = myrandomlt26();
+            blockKeeper[temp++] = basicBlock1;
+            blockKeeper[temp] = basicBlock2;
             Emit(node->op, &res, NULL, NULL);
+            blkCounter += 2;
             Expr(node->right);
-            printf("B%d:\n", currentBlock);
+            printf("\tjumpi -> %d\n", basicBlock0.begin);
+            printf("%d:\n", basicBlock1.begin);
             break;
         case ASTNODE_NUM:                   // num node
             res = GetNextReg();
@@ -359,7 +376,6 @@ int SearchRarp(char *var)
         if (!strcmp(sp[i]->name, var))
             return sp[i]->offset;
     }
-    //printf("%d\n", virtualReg);
     return base;
 }
 
@@ -371,7 +387,6 @@ int GetCurrentReg()
 // emit ILOC code
 void Emit(ASTOp op, int *src1, int *src2, int *dest)
 {
-    // char beginBasicBlk[30];
     switch (op) {
         case LOADI_OP:
             printf("\tloadi %d -> r%d\n", *src1, *dest);
@@ -419,8 +434,8 @@ void Emit(ASTOp op, int *src1, int *src2, int *dest)
             printf("\tcmp_NE r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case CBR_OP:
-            printf("\tcbr r%d -> B%d, B%d\n", *src1, currentBlock, currentBlock+1);
-            printf("B%d:\n", currentBlock);
+            printf("\tcbr r%d -> %d, %d\n", *src1, blockKeeper[blkCounter].begin, blockKeeper[blkCounter+1].begin);
+            printf("%d:\n", blockKeeper[blkCounter].begin);
             break;
         default:
             break;

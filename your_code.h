@@ -2,7 +2,23 @@
 #define YOUR_CODE_H
 #include "stddef.h"
 #include "stdlib.h"
+
 // A counter to keep track of basic block
+typedef struct BasicBlock BB;
+struct BasicBlock {
+	unsigned begin;		// begin of a block
+};
+static int blkCounter = 0;
+BB blockKeeper[50];
+// generate random character
+static inline unsigned myrandomlt26() {
+   long l;
+   do { l = random(); } while (l>=(RAND_MAX/100)*100);
+   return (unsigned)(l % 100);
+}
+
+
+
 // counter for virtual register
 static int virtualReg = 0;
 static int base = 0;
