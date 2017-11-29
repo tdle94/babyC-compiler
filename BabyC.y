@@ -120,8 +120,9 @@ Factor: IDENT 		{$$ = CreateIdentNode($1); printf("Creating IDENT node for %s\n"
 ;
 
 
-If: IF '('Condition')' Code ELSE Code				{$$ = CreateIfElseNode($3, $5, $7); puts("Creating if else node");}
-	| IF '('Condition')' Code				{$$ = CreateIfNode($3, $5); puts("Creating if node");}
+If: IF '('Condition')' Code				{$$ = CreateIfNode($3, $5); puts("Creating if Statement node");}
+	| IF '('Condition')' Code ELSE Code				{$$ = CreateIfElseNode($3, $5, $7); puts("Creating if-else Statement node");}
+
 ;
 
 Code: Statement								{$$ = $1;}

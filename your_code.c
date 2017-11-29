@@ -107,16 +107,12 @@ ASTNode *CreateAssignmentNode(ASTNode *lhs, ASTNode *expr)
 // Return a pointer to the bigger list that resulted from this linking
 ASTNode *CreateStatementListNode(ASTNode *st, ASTNode *stList)
 {
-    //
-    // if (st == NULL)
-    //     st = malloc(sizeof(ASTNode));
-    // if (stList == NULL)
-    //     stList = malloc(sizeof(ASTNode));
-    st->next = stList;
-
-    // st = malloc(sizeof(ASTNode));
-    // stList = malloc(sizeof(ASTNode));
-    //  st->next = stList;
+    if (st->type != ASTNODE_IFELSE)
+        st->next = stList;
+    // if (st->type == ASTNODE_IFELSE)
+    // {
+    //     printf("stmt: %d\n", stList->type);
+    // }
     return st;
 }
 
@@ -147,6 +143,10 @@ ASTNode *CreateIfNode(ASTNode *cond, ASTNode *stList)
     node->right = stList;
     node->type = ASTNODE_IF;
     node->op = CBR_OP;
+    // if (stList->type == ASTNODE_IFELSE)
+    // {
+    //     //printf("%d\n", stList->next->type);
+    // }
 
     return node;
 }
@@ -159,7 +159,7 @@ ASTNode *CreateIfElseNode(ASTNode *cond, ASTNode *stList1, ASTNode *stList2)
     node->next = stList2;
     node->type = ASTNODE_IFELSE;
     node->op = CBR_OP;
-
+    //printf("%d\n", node->next->right->num);
     return node;
 }
 
@@ -276,58 +276,53 @@ int GetNextReg()
 // generate ILOC for expression nodes and return the register number
 int Expr(ASTNode * node)
 {
-    int res,
-        t1,
-        t2;
+    int res,            // result of next register
+        t1,         // current t1 (temporary) register
+        t2;         // current t2 (temporary) register
 
     switch (node->type)
     {
-        case ASTNODE_COMPARE:
+        case ASTNODE_COMPARE:       // compare node such as ==, !=, <, <=, >, >=
+        case ASTNODE_LOGIC_OP:      // logic node such as &&, ||
+        case ASTNODE_ARITH_OP:          // arithmetic such as +, -, *, /
             t1 = Expr(node->left);
             t2 = Expr(node->right);
             res = GetNextReg();
             Emit(node->op, &t1, &t2, &res);
             break;
-        case ASTNODE_LOGIC_OP:
-            t1 = Expr(node->left);
-            t2 = Expr(node->right);
-            res = GetNextReg();
-            Emit(node->op, &t1, &t2, &res);
+        case ASTNODE_IF:                        // if node
+            res = Expr(node->left);
+            Emit(node->op, &res, NULL, NULL);   // begin of block
+            Expr(node->right);
+            printf("B%d:\n", currentBlock);     // end of block
             break;
-        case ASTNODE_WHILE:
+        case ASTNODE_IFELSE:                    // if else node
+            res = Expr(node->left);
+            Emit(node->op, &res, NULL, NULL);   // begin of block
+            Expr(node->right);
+            printf("\tjumpi -> B%d\n", currentBlock); // done with an if stmt so no need to evaluate else, so jump to an end block
             printf("B%d:\n", currentBlock);
+            Expr(node->next);
+            printf("B%d:\n", currentBlock);     // end of block
+            break;
+        case ASTNODE_WHILE:                     // while node
+            printf("B%d:\n", currentBlock);     
             currentBlock++;
             res = Expr(node->left);
             Emit(node->op, &res, NULL, NULL);
             Expr(node->right);
+            printf("B%d:\n", currentBlock);
             break;
-        case ASTNODE_IF:
-            res = Expr(node->left);
-            Emit(node->op, &res, NULL, NULL);
-            Expr(node->right);
-            break;
-        case ASTNODE_IFELSE:
-            res = Expr(node->left);
-            Emit(node->op, &res, NULL, NULL);
-            Expr(node->right);
-            Expr(node->next);
-            break;
-        case ASTNODE_NUM:
+        case ASTNODE_NUM:                   // num node
             res = GetNextReg();
             Emit(node->op, &node->num, NULL, &res);
             break;
-        case ASTNODE_IDENT:
+        case ASTNODE_IDENT:             // ident node
             res = GetNextReg();
             node->offset = SearchRarp(node->name);
             Emit(node->op, &node->base, &node->offset, &res);
             break;
-        case ASTNODE_ARITH_OP:
-            t1 = Expr(node->left);
-            t2 = Expr(node->right);
-            res = GetNextReg();
-            Emit(node->op, &t1, &t2, &res);
-            break;
-        case ASTNODE_ASSIGN:
+        case ASTNODE_ASSIGN:            // assign node
             res = Expr(node->right);
             CreateRarp(node);
             Emit(node->op, &res, &node->base,& node->offset);
@@ -379,52 +374,53 @@ void Emit(ASTOp op, int *src1, int *src2, int *dest)
     // char beginBasicBlk[30];
     switch (op) {
         case LOADI_OP:
-            printf("loadi %d -> r%d\n", *src1, *dest);
+            printf("\tloadi %d -> r%d\n", *src1, *dest);
             break;
         case LOADAI_OP:
-            printf("loadAI rarp, %d -> r%d\n", *src2, *dest);
+            printf("\tloadAI rarp, %d -> r%d\n", *src2, *dest);
             break;
         case STOREAI_OP:
-            printf("storeAI r%d -> rarp, %d\n", *src1, *dest);
+            printf("\tstoreAI r%d -> rarp, %d\n", *src1, *dest);
             break;
         case MULT_OP:
-            printf("mult r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tmult r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case ADD_OP:
-            printf("add r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tadd r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case DIV_OP:
-            printf("div r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tdiv r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case SUB_OP:
-            printf("sub r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tsub r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case OR_OP:
-            printf("or r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tor r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case AND_OP:
-            printf("and r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tand r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case GT_OP:
-            printf("cmp_GT r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_GT r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case GE_OP:
-            printf("cmp_GE r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_GE r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case LT_OP:
-            printf("cmp_LT r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_LT r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case LE_OP:
-            printf("cmp_LE r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_LE r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case EQ_OP:
-            printf("cmp_EQ r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_EQ r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case NE_OP:
-            printf("cmp_NE r%d, r%d -> r%d\n", *src1, *src2, *dest);
+            printf("\tcmp_NE r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case CBR_OP:
-            printf("cbr r%d -> B%d, B%d\n", *src1, currentBlock, currentBlock+1);
+            printf("\tcbr r%d -> B%d, B%d\n", *src1, currentBlock, currentBlock+1);
+            printf("B%d:\n", currentBlock);
             break;
         default:
             break;

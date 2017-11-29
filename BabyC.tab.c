@@ -430,7 +430,7 @@ static const yytype_uint8 yyprhs[] =
 {
        0,     0,     3,    11,    12,    15,    19,    20,    23,    25,
       27,    29,    34,    36,    38,    42,    46,    48,    52,    56,
-      58,    60,    64,    72,    78,    80,    84,    88,    90,    94,
+      58,    60,    64,    70,    78,    80,    84,    88,    90,    94,
       96,    98,   102,   104,   106,   108,   110,   112,   114
 };
 
@@ -443,8 +443,8 @@ static const yytype_int8 yyrhs[] =
       22,    37,    21,    -1,    15,    -1,    38,    -1,    37,    23,
       38,    -1,    37,    24,    38,    -1,    39,    -1,    38,    25,
       39,    -1,    38,    26,    39,    -1,    15,    -1,    16,    -1,
-      17,    37,    18,    -1,    11,    17,    42,    18,    41,    12,
-      41,    -1,    11,    17,    42,    18,    41,    -1,    34,    -1,
+      17,    37,    18,    -1,    11,    17,    42,    18,    41,    -1,
+      11,    17,    42,    18,    41,    12,    41,    -1,    34,    -1,
       19,    33,    20,    -1,    42,     7,    43,    -1,    43,    -1,
       43,     8,    44,    -1,    44,    -1,    45,    -1,    37,    46,
       37,    -1,     4,    -1,     3,    -1,     6,    -1,     5,    -1,
@@ -457,8 +457,8 @@ static const yytype_uint8 yyrline[] =
 {
        0,    82,    82,    85,    86,    89,    92,    93,    96,    97,
       98,   101,   104,   107,   108,   109,   112,   113,   114,   117,
-     118,   119,   123,   124,   127,   128,   133,   134,   137,   138,
-     142,   145,   148,   149,   150,   151,   152,   153,   158
+     118,   119,   123,   124,   128,   129,   134,   135,   138,   139,
+     143,   146,   149,   150,   151,   152,   153,   154,   159
 };
 #endif
 
@@ -502,7 +502,7 @@ static const yytype_uint8 yyr2[] =
 {
        0,     2,     7,     0,     2,     3,     0,     2,     1,     1,
        1,     4,     1,     1,     3,     3,     1,     3,     3,     1,
-       1,     3,     7,     5,     1,     3,     3,     1,     3,     1,
+       1,     3,     5,     7,     1,     3,     3,     1,     3,     1,
        1,     3,     1,     1,     1,     1,     1,     1,     7
 };
 
@@ -517,8 +517,8 @@ static const yytype_uint8 yydefact[] =
        0,    13,    16,     0,    27,    29,    30,     0,     0,     0,
       33,    32,    35,    34,     0,     0,    36,    37,     0,     0,
        0,     0,     0,     0,     0,    11,    21,    14,    15,    31,
-      17,    18,    26,     6,    24,    23,    28,     6,     0,     0,
-       0,    25,    22,    38
+      17,    18,    26,     6,    24,    22,    28,     6,     0,     0,
+       0,    25,    23,    38
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -1512,86 +1512,86 @@ yyreduce:
 
   case 22:
 #line 123 "BabyC.y"
-    {(yyval.node) = CreateIfElseNode((yyvsp[(3) - (7)].node), (yyvsp[(5) - (7)].node), (yyvsp[(7) - (7)].node)); puts("Creating if else node");;}
+    {(yyval.node) = CreateIfNode((yyvsp[(3) - (5)].node), (yyvsp[(5) - (5)].node)); puts("Creating if Statement node");;}
     break;
 
   case 23:
 #line 124 "BabyC.y"
-    {(yyval.node) = CreateIfNode((yyvsp[(3) - (5)].node), (yyvsp[(5) - (5)].node)); puts("Creating if node");;}
+    {(yyval.node) = CreateIfElseNode((yyvsp[(3) - (7)].node), (yyvsp[(5) - (7)].node), (yyvsp[(7) - (7)].node)); puts("Creating if-else Statement node");;}
     break;
 
   case 24:
-#line 127 "BabyC.y"
+#line 128 "BabyC.y"
     {(yyval.node) = (yyvsp[(1) - (1)].node);;}
     break;
 
   case 25:
-#line 128 "BabyC.y"
+#line 129 "BabyC.y"
     {(yyval.node) = (yyvsp[(2) - (3)].node);;}
     break;
 
   case 26:
-#line 133 "BabyC.y"
+#line 134 "BabyC.y"
     {(yyval.node) = CreateOrNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node)); puts("Creating OR node");;}
     break;
 
   case 27:
-#line 134 "BabyC.y"
+#line 135 "BabyC.y"
     {(yyval.node) = (yyvsp[(1) - (1)].node);;}
     break;
 
   case 28:
-#line 137 "BabyC.y"
+#line 138 "BabyC.y"
     {(yyval.node) = CreateAndNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node)); puts("Creating AND node");;}
     break;
 
   case 29:
-#line 138 "BabyC.y"
+#line 139 "BabyC.y"
     {(yyval.node) = (yyvsp[(1) - (1)].node);;}
     break;
 
   case 30:
-#line 142 "BabyC.y"
+#line 143 "BabyC.y"
     {(yyval.node) = (yyvsp[(1) - (1)].node);;}
     break;
 
   case 31:
-#line 145 "BabyC.y"
+#line 146 "BabyC.y"
     {(yyval.node) = CreateCmpNode((yyvsp[(1) - (3)].node), (yyvsp[(2) - (3)].node), (yyvsp[(3) - (3)].node)); puts("Creating Compare node");;}
     break;
 
   case 32:
-#line 148 "BabyC.y"
+#line 149 "BabyC.y"
     {(yyval.node) = CreateOpNode(">=");;}
     break;
 
   case 33:
-#line 149 "BabyC.y"
+#line 150 "BabyC.y"
     {(yyval.node) = CreateOpNode("<=");;}
     break;
 
   case 34:
-#line 150 "BabyC.y"
+#line 151 "BabyC.y"
     {(yyval.node) = CreateOpNode("!=");;}
     break;
 
   case 35:
-#line 151 "BabyC.y"
+#line 152 "BabyC.y"
     {(yyval.node) = CreateOpNode("==");;}
     break;
 
   case 36:
-#line 152 "BabyC.y"
+#line 153 "BabyC.y"
     {(yyval.node) = CreateOpNode(">");;}
     break;
 
   case 37:
-#line 153 "BabyC.y"
+#line 154 "BabyC.y"
     {(yyval.node) = CreateOpNode("<");;}
     break;
 
   case 38:
-#line 158 "BabyC.y"
+#line 159 "BabyC.y"
     {(yyval.node) = CreateWhileNode((yyvsp[(3) - (7)].node), (yyvsp[(6) - (7)].node)); puts("Creating while node");}
     break;
 
@@ -1811,6 +1811,6 @@ yyreturn:
 }
 
 
-#line 163 "BabyC.y"
+#line 164 "BabyC.y"
 
 

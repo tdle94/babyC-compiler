@@ -3,13 +3,6 @@
 #include "stddef.h"
 #include "stdlib.h"
 // A counter to keep track of basic block
-static int currentBlock = 0;
-
-
-
-
-
-
 // counter for virtual register
 static int virtualReg = 0;
 static int base = 0;
@@ -34,9 +27,9 @@ struct ASTNode{
 	int base;
 	int offset;
 	char *logicOp;
+	ASTNode* next;
 	ASTNode* left; // Left child
 	ASTNode* right; // Right child
-	ASTNode* next;
 };
 
 // activation record pointer aka stack pointer

@@ -24,7 +24,6 @@ int main(int argc, char**argv)
         // Add embedded actions to the parser (in BabyC.y) to construct the AST and store its root in gASTRoot.
         yyparse();
         fclose(yyin);
-        // printf("%d\n", gASTRoot->next->type);
         // Now that the AST has been constructed, pass its root to the function that traverses it and generates the ILOC code.
         GenerateILOC(gASTRoot);
         // Code generation is commented out in this assignment. You will implement it in the next assignment.
