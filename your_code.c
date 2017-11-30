@@ -30,6 +30,10 @@ ASTNode *CreateIdentNode(char *name)
 
     if (GetVar(name) == NULL)
     {
+        puts(name);
+        int i = 0;
+        // for (i = 0; i < 16; i++)
+        //     printf("%s ", hash[i].variable);
         printf("%s\n", "Ident not declare");
         exit(1);
     }
@@ -107,9 +111,23 @@ ASTNode *CreateAssignmentNode(ASTNode *lhs, ASTNode *expr)
 // Return a pointer to the bigger list that resulted from this linking
 ASTNode *CreateStatementListNode(ASTNode *st, ASTNode *stList)
 {
-    if (st->type != ASTNODE_IFELSE)
-        st->next = stList;
-    return st;
+    // if (st->type != ASTNODE_IFELSE)
+    // {
+    //     st->next = stList;
+    // }
+    // else
+    // {
+    //     ASTNode *node = malloc(sizeof(ASTNode));
+    //     node->left = st;
+    //     node->right = stList;
+    //     st = node;
+    // }
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->left = st;
+    node->right = stList;
+    node->type = ASTNODE_STMTLIST;
+
+    return node;
 }
 
 ASTNode *AddDeclarationList(ASTNode *declaration, ASTNode *declarationList)
@@ -152,7 +170,7 @@ ASTNode *CreateIfElseNode(ASTNode *cond, ASTNode *stList1, ASTNode *stList2)
     node->next = stList2;
     node->type = ASTNODE_IFELSE;
     node->op = CBR_OP;
-    //printf("%d\n", node->next->right->num);
+
     return node;
 }
 
@@ -213,21 +231,23 @@ ASTNode *CreateCmpNode(ASTNode *lExpr, ASTNode *Op, ASTNode *rExpr)
 
 void AddDeclaration(char *name)
 {
-    int i;
+    unsigned long i;
     if (GetVar(name) != NULL)
     {
         printf("%s %s\n", "Multiple declaration of ", name);
-        return;
+        exit(1);
     }
 
     for (i = HashFunc(name); hash[i].variable != NULL; i = (i + 1) % M)
-        if (hash[i].key == i)
+        if (!strcmp(hash[i].variable, name))    // if a variable is already in the hash
         {
             hash[i].variable = name;
+            //printf("%lu, %s\n", i, hash[i].variable);
             return;
         }
     hash[i].key = i;
     hash[i].variable = name;
+     //printf("%lu, %s\n", i, hash[i].variable);
     N++;
 }
 
@@ -266,17 +286,50 @@ int GetNextReg()
 }
 
 
+void buildBasicBlk(BasicBlk * basicBlk)      // current block number
+{
+    // basic block label. _T => then; _E => else; _M => merge; _C => condition; _B => branch; _O => out respectively
+    char *blkLabel[6] = {"_T", "_E", "_M", "_C", "_B", "_O"};
+    if (basicBlk->type == IF_BLK)
+    {
+        basicBlk->blkLabelIf = blkLabel[0];
+        basicBlk->blkLabelElse = blkLabel[2];
+    }
+    else if (basicBlk->type == IFELSE_BLK)
+    {
+        basicBlk->blkLabelIf = blkLabel[0];
+        basicBlk->blkLabelMerge = blkLabel[2];
+        basicBlk->blkLabelElse = blkLabel[1];
+    }
+    else if (basicBlk->type == WHILE_BLK)
+    {
+        basicBlk->blkLabelCond = blkLabel[3];
+        basicBlk->blkLabelBr = blkLabel[4];
+        basicBlk->blkLabelOut = blkLabel[5];
+    }
+    basicBlk->blkCnt = blkCnt;
+    blkKeeper[blkCnt] = *basicBlk;
+}
+
+void initBlkType(BasicBlk *ifBlk, BasicBlk *ifElseBlk, BasicBlk *whileBlk)
+{
+    ifBlk->type = IF_BLK;
+    ifElseBlk->type = IFELSE_BLK;
+    whileBlk->type = WHILE_BLK;
+}
+
 // generate ILOC for expression nodes and return the register number
 int Expr(ASTNode * node)
 {
     int res,            // result of next register
         t1,         // current t1 (temporary) register
-        t2,         // current t2 (temporary) register
-        temp = blkCounter;  // temporary block counter
+        t2;         // current t2 (temporary) register
+        //temp = blkCounter;  // temporary block counter
 
-    BB basicBlock0;
-    BB basicBlock1;
-    BB basicBlock2;
+    BasicBlk ifBlk;
+    BasicBlk ifElseBlk;
+    BasicBlk whileBlk;
+    initBlkType(&ifBlk, &ifElseBlk, &whileBlk);
 
     switch (node->type)
     {
@@ -290,45 +343,35 @@ int Expr(ASTNode * node)
             break;
         case ASTNODE_IF:                        // if node
             res = Expr(node->left);
-            basicBlock0.begin = myrandomlt26();     // begin
-            basicBlock1.begin = myrandomlt26();     // end
-            blockKeeper[temp++] = basicBlock0;
-            blockKeeper[temp] = basicBlock1;
+            blkCnt++;
+            buildBasicBlk(&ifBlk); // build begin and end block label
             Emit(node->op, &res, NULL, NULL);   // begin of if block
-            blkCounter++;
             Expr(node->right);
-            printf("%d:\n", basicBlock1.begin);     // end of if block
+            printf("L%d%s:\n", ifBlk.blkCnt, ifBlk.blkLabelElse);     // end of if block
             break;
         case ASTNODE_IFELSE:                    // if else node
             res = Expr(node->left);
-            basicBlock0.begin = myrandomlt26();
-            basicBlock1.begin = myrandomlt26();
-            blockKeeper[temp++] = basicBlock0;
-            blockKeeper[temp++] = basicBlock1;
+            blkCnt++;
+            buildBasicBlk(&ifElseBlk); // build begin and end block label
             Emit(node->op, &res, NULL, NULL);   // begin of if block
-            blkCounter += 2;
             Expr(node->right);
-            basicBlock2.begin = myrandomlt26();
-            blockKeeper[temp] = basicBlock2;
-            printf("\tjumpi -> %d\n", basicBlock2.begin);        // jump to
-            printf("%d:\n", basicBlock1.begin);     // begin of else block
+            buildBasicBlk(&ifElseBlk);
+            printf("\tjumpi -> L%d%s\n", ifElseBlk.blkCnt, ifElseBlk.blkLabelMerge);        // jump to
+            printf("L%d%s:\n", ifElseBlk.blkCnt, ifElseBlk.blkLabelElse);     // begin of else block
             Expr(node->next);
-            printf("%d:\n", basicBlock2.begin);  // end of if/else block
+            printf("L%d%s:\n", ifElseBlk.blkCnt, ifElseBlk.blkLabelIf);  // end of if/else block
             break;
         case ASTNODE_WHILE:                     // while node
-            basicBlock0.begin = myrandomlt26();
-            blockKeeper[temp++] = basicBlock1;
-            printf("%d:\n", basicBlock0.begin);
+            blkCnt++;
+            buildBasicBlk(&whileBlk);
+            printf("L%d%s:\n", whileBlk.blkCnt, whileBlk.blkLabelCond);
             res = Expr(node->left);
-            basicBlock1.begin = myrandomlt26();
-            basicBlock2.begin = myrandomlt26();
-            blockKeeper[temp++] = basicBlock1;
-            blockKeeper[temp] = basicBlock2;
+            buildBasicBlk(&whileBlk);
+            buildBasicBlk(&whileBlk);
             Emit(node->op, &res, NULL, NULL);
-            blkCounter += 2;
             Expr(node->right);
-            printf("\tjumpi -> %d\n", basicBlock0.begin);
-            printf("%d:\n", basicBlock1.begin);
+            printf("\tjumpi -> L%u%s\n", whileBlk.blkCnt, whileBlk.blkLabelCond);
+            printf("L%d%s:\n", whileBlk.blkCnt, whileBlk.blkLabelOut);
             break;
         case ASTNODE_NUM:                   // num node
             res = GetNextReg();
@@ -345,6 +388,14 @@ int Expr(ASTNode * node)
             Emit(node->op, &res, &node->base,& node->offset);
             if (node->next == NULL) break;
             res = Expr(node->next);
+            //puts("dlfkj");
+            break;
+        case ASTNODE_STMTLIST:
+            Expr(node->left);
+            //puts("dlfkj");
+            if (node->right == NULL) break;
+            Expr(node->right);
+            //puts("dlfkj");
             break;
         default:
             res = Expr(node->left);
@@ -434,8 +485,16 @@ void Emit(ASTOp op, int *src1, int *src2, int *dest)
             printf("\tcmp_NE r%d, r%d -> r%d\n", *src1, *src2, *dest);
             break;
         case CBR_OP:
-            printf("\tcbr r%d -> %d, %d\n", *src1, blockKeeper[blkCounter].begin, blockKeeper[blkCounter+1].begin);
-            printf("%d:\n", blockKeeper[blkCounter].begin);
+            if (blkKeeper[blkCnt].type == IF_BLK || blkKeeper[blkCnt].type == IFELSE_BLK)
+                printf("\tcbr r%d -> L%d%s, L%d%s\nL%d%s\n", *src1,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelIf,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelElse,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelIf);
+            else if (blkKeeper[blkCnt].type == WHILE_BLK)
+                printf("\tcbr r%d -> L%d%s, L%d%s\nL%d%s\n", *src1,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelBr,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelOut,
+                                                    blkKeeper[blkCnt].blkCnt, blkKeeper[blkCnt].blkLabelBr);
             break;
         default:
             break;

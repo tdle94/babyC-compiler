@@ -1472,7 +1472,7 @@ yyreduce:
 
   case 14:
 #line 108 "BabyC.y"
-    {(yyval.node) = CreateAddNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node)); puts("Creating add node");;}
+    {(yyval.node) = CreateAddNode((yyvsp[(1) - (3)].node), (yyvsp[(3) - (3)].node)); puts("Creating Addition node");;}
     break;
 
   case 15:
@@ -1507,7 +1507,7 @@ yyreduce:
 
   case 21:
 #line 119 "BabyC.y"
-    {(yyval.node) = (yyvsp[(2) - (3)].node); puts("Creating Expression node in parentheses");}
+    {(yyval.node) = (yyvsp[(2) - (3)].node); puts("Creating Expression node in parentheses");;}
     break;
 
   case 22:

@@ -105,7 +105,7 @@ LHS:  IDENT					{$$ = CreateIdentLeftNode($1); printf("Creating left-hand IDENT 
 ;
 
 Expr: Term 					{$$ = $1;}
-	  | Expr '+' Term 		{$$ = CreateAddNode($1, $3); puts("Creating add node");}
+	  | Expr '+' Term 		{$$ = CreateAddNode($1, $3); puts("Creating Addition node");}
 	  | Expr '-' Term			{$$ = CreateSubNode($1, $3); puts("Creating Subtraction node");}
 ;
 
@@ -116,7 +116,7 @@ Term: Factor 				{$$ = $1;}
 
 Factor: IDENT 		{$$ = CreateIdentNode($1); printf("Creating IDENT node for %s\n", $1);}
 	| NUM 		{$$ = CreateNumNode($1); printf("Creating NUM node for %d\n", $1);}
-	| '('Expr')'	{$$ = $2; puts("Creating Expression node in parentheses")}
+	| '('Expr')'	{$$ = $2; puts("Creating Expression node in parentheses");}
 ;
 
 

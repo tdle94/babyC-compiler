@@ -3,21 +3,33 @@
 #include "stddef.h"
 #include "stdlib.h"
 
-// A counter to keep track of basic block
-typedef struct BasicBlock BB;
-struct BasicBlock {
-	unsigned begin;		// begin of a block
+// Block type such as if block, if/else block and while block
+typedef enum {WHILE_BLK, IFELSE_BLK, IF_BLK} BlkType;
+
+// A counter to keep track of basic block if
+typedef struct BB BasicBlk;
+struct BB {
+	BlkType type;
+	unsigned blkCnt;		// block counter
+	char *blkLabelIf;			// beginining of block label
+	char *blkLabelMerge;			// merge after if statement
+	char *blkLabelElse;			// ending of block label
+	char *blkLabelCond;			// beginining of block label
+	char *blkLabelBr;			// merge after if statement
+	char *blkLabelOut;			// ending of block label
 };
-static int blkCounter = 0;
-BB blockKeeper[50];
+
+
+static int blkCnt = -1;
+BasicBlk blkKeeper[50];
+
+
 // generate random character
 static inline unsigned myrandomlt26() {
    long l;
    do { l = random(); } while (l>=(RAND_MAX/100)*100);
    return (unsigned)(l % 100);
 }
-
-
 
 // counter for virtual register
 static int virtualReg = 0;
@@ -26,7 +38,7 @@ static int offset = 4;
 
 typedef enum{ASTNODE_ARITH_OP, ASTNODE_LOGIC_OP, ASTNODE_COMPARE,
 	         ASTNODE_ASSIGN, ASTNODE_IDENT, ASTNODE_NUM,
-			  ASTNODE_IF, ASTNODE_WHILE, ASTNODE_IFELSE} ASTNodeType;
+			  ASTNODE_IF, ASTNODE_WHILE, ASTNODE_IFELSE, ASTNODE_STMTLIST} ASTNodeType;
 
 // Define all operation types (add, mult, etc) here.
 typedef enum{ADD_OP, MULT_OP, DIV_OP, SUB_OP,
@@ -35,7 +47,7 @@ typedef enum{ADD_OP, MULT_OP, DIV_OP, SUB_OP,
 
 // generic node that has every field
 typedef struct ASTNode ASTNode;
-struct ASTNode{
+struct ASTNode {
 	ASTNodeType type;
     ASTOp op; // The actual operation (add, mult, etc)
 	int num;  //Need to store the actual value for number nodes
@@ -72,6 +84,8 @@ ASTNode* CreateOrNode(ASTNode*, ASTNode*);
 ASTNode* CreateAndNode(ASTNode*, ASTNode*);
 ASTNode* CreateCmpNode(ASTNode*, ASTNode*, ASTNode*);
 ASTNode* CreateOpNode(char*);
+
+/** hash function **/
 unsigned long HashFunc(char *);
 char *GetVar(char*);
 
@@ -86,4 +100,6 @@ int Expr(ASTNode*);		// generate expression code
 int GetCurrentReg();
 int SearchRarp(char*);
 void CreateRarp(ASTNode*);
+void buildBasicBlk(BasicBlk *);
+void initBlkType(BasicBlk*, BasicBlk*, BasicBlk*);
 #endif
